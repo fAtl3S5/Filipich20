@@ -8,16 +8,22 @@
 
 | Пункт | Состояние |
 |---|---|
-| Код на GitHub | ✅ `https://github.com/fAtl3S5/Filipich20` (ветка `main` + `cursor/filippych-subscription-5307`) |
+| GitHub repo | `https://github.com/fAtl3S5/Filipich20` — существует, пока **пустой** |
+| Push кода | ❌ PAT дал 403 на запись (`Resource not accessible by personal access token`). Нужен PAT с **Contents: Read and write** |
+| Локальный SHA готов | `aef704bf1e62c03738e898010c43d2371ed06e50` на ветке `cursor/filippych-subscription-5307` |
 | `ADMIN_IDS` | ✅ `475444567` |
 | `CHANNEL_ID` | ✅ `-1004373038215` |
 | `DISCUSSION_GROUP_ID` | ✅ `-1004381561059` |
 | Бот admin канала/группы | ✅ по словам владельца |
 | ЮKасса | ⏸ пропуск: `ENABLE_WEB_YOOKASSA=false` |
-| Bothost login / API key агента | ❌ **нет в store** — деплой в панель Bothost из агента невозможен без email/password или API-токена владельца |
-| `BOT_TOKEN` / `SECRET_KEY` в панели | ⏳ ввести владельцу (не в Git) |
+| Bothost login / API key | ❌ **нет в store** — «зайди сам» невозможно без email/password или сессии |
+| `BOT_TOKEN` / секреты в панели | ⏳ только в Bothost panel, не в Git |
 
-**Координатору нужно от владельца:** логин/пароль Bothost **или** иной способ входа (сессия/API), плюс `BOT_TOKEN` в панели (если ещё не сохранён там). Без этого агент не может «зайти сам».
+**Координатору нужно от владельца:**
+
+1. Новый GitHub PAT с правом записи в `Filipich20` (Contents: Read and write / classic `repo`).
+2. Логин/пароль Bothost **или** подтверждение, что владелец сам создаст бота по шагам ниже.
+3. `BOT_TOKEN` ввести в панели Bothost (не присылать в Git).
 
 ---
 
