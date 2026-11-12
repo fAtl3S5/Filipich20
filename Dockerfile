@@ -27,5 +27,5 @@ RUN chmod +x scripts/entrypoint.sh scripts/bothost_start.sh scripts/backup.sh sc
 EXPOSE 8080
 
 # Local compose overrides command to scripts/entrypoint.sh (fixed port 8741).
-# Bothost: enable "custom Dockerfile" — this CMD reads PORT from the platform.
-CMD ["bash", "scripts/bothost_start.sh"]
+# Bothost custom Dockerfile / archive rebuild: Python entry (also works if platform wraps CMD).
+CMD ["python", "main.py"]
