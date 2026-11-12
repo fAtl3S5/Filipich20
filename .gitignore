@@ -14,6 +14,8 @@ htmlcov/
 dist/
 build/
 *.sqlite3
+*.db
+local.db
 .DS_Store
 .idea/
 .vscode/
