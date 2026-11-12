@@ -23,3 +23,6 @@ docker-data/
 backups/
 *.log
 local-secrets.env
+owner-deploy-secrets.env
+**/owner-deploy-secrets.env
+**/local-secrets.env
