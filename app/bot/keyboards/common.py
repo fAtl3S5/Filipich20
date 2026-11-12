@@ -7,9 +7,14 @@ from app.core.plans import PLANS, format_rub
 from app.payments.stars import available_stars_plans
 
 
+def manager_contact_url(settings: Settings) -> str:
+    return (settings.support_url or "https://t.me/kovalg29").strip()
+
+
 def main_menu_kb(*, active: bool = False) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton(text="Оформить подписку", callback_data="menu:subscribe")],
+        [InlineKeyboardButton(text="Услуги", callback_data="menu:services")],
         [InlineKeyboardButton(text="Моя подписка", callback_data="menu:status")],
     ]
     if active:
@@ -17,6 +22,35 @@ def main_menu_kb(*, active: bool = False) -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(text="Документы", callback_data="menu:docs")])
     rows.append([InlineKeyboardButton(text="Поддержка", callback_data="menu:support")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def services_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Видеопривет — 1 990 ₽", callback_data="service:video")],
+            [
+                InlineKeyboardButton(
+                    text="Онлайн-встреча — 3 990 ₽",
+                    callback_data="service:meeting",
+                )
+            ],
+            [InlineKeyboardButton(text="« Назад", callback_data="menu:home")],
+        ]
+    )
+
+
+def contact_manager_kb(settings: Settings, *, back: str = "menu:services") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Связаться с менеджером",
+                    url=manager_contact_url(settings),
+                )
+            ],
+            [InlineKeyboardButton(text="« Назад", callback_data=back)],
+        ]
+    )
 
 
 def docs_kb(settings: Settings) -> InlineKeyboardMarkup:

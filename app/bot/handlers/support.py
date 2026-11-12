@@ -18,8 +18,19 @@ _waiting_support: set[int] = set()
 @router.message(Command("support"))
 async def cmd_support(message: Message, settings: Settings) -> None:
     assert message.from_user
-    if settings.support_url:
-        await message.answer(f"Поддержка: {settings.support_url}")
+    from app.bot.keyboards.common import manager_contact_url
+
+    support = manager_contact_url(settings)
+    if support:
+        await message.answer(
+            f"Поддержка: {support}\nМенеджер: @kovalg29",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="Написать @kovalg29", url=support)]
+                ]
+            ),
+            disable_web_page_preview=True,
+        )
         return
     _waiting_support.add(message.from_user.id)
     await message.answer("Опишите вопрос одним сообщением.")

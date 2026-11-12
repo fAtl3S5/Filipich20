@@ -6,17 +6,22 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards.common import (
+    contact_manager_kb,
     docs_kb,
     enter_channel_kb,
     main_menu_kb,
+    services_kb,
     subscribe_plans_kb,
 )
 from app.bot.texts import (
     DEFERRED_NOTE,
     ONE_TIME_NOTE,
+    ONLINE_MEETING_TEXT,
+    SERVICES_INTRO,
     START_TEXT,
     STARS_TEST_NOTE,
     SUBSCRIBE_INTRO,
+    VIDEO_GREETING_TEXT,
 )
 from app.payments.stars import available_stars_plans
 from app.core.config import Settings, get_settings
@@ -83,6 +88,27 @@ def _subscribe_text(settings: Settings) -> str:
 @router.message(Command("subscribe", "buy"))
 async def cmd_subscribe(message: Message, settings: Settings) -> None:
     await message.answer(_subscribe_text(settings), reply_markup=subscribe_plans_kb(settings))
+
+
+@router.message(Command("services"))
+async def cmd_services(message: Message) -> None:
+    await message.answer(SERVICES_INTRO, reply_markup=services_kb())
+
+
+@router.message(Command("video"))
+async def cmd_video(message: Message, settings: Settings) -> None:
+    await message.answer(
+        VIDEO_GREETING_TEXT,
+        reply_markup=contact_manager_kb(settings),
+    )
+
+
+@router.message(Command("meeting"))
+async def cmd_meeting(message: Message, settings: Settings) -> None:
+    await message.answer(
+        ONLINE_MEETING_TEXT,
+        reply_markup=contact_manager_kb(settings),
+    )
 
 
 @router.message(Command("status"))
@@ -183,6 +209,30 @@ async def cb_enter(
     await query.answer()
 
 
+@router.callback_query(F.data == "menu:services")
+async def cb_services(query: CallbackQuery) -> None:
+    await query.message.edit_text(SERVICES_INTRO, reply_markup=services_kb())  # type: ignore[union-attr]
+    await query.answer()
+
+
+@router.callback_query(F.data == "service:video")
+async def cb_service_video(query: CallbackQuery, settings: Settings) -> None:
+    await query.message.edit_text(  # type: ignore[union-attr]
+        VIDEO_GREETING_TEXT,
+        reply_markup=contact_manager_kb(settings),
+    )
+    await query.answer()
+
+
+@router.callback_query(F.data == "service:meeting")
+async def cb_service_meeting(query: CallbackQuery, settings: Settings) -> None:
+    await query.message.edit_text(  # type: ignore[union-attr]
+        ONLINE_MEETING_TEXT,
+        reply_markup=contact_manager_kb(settings),
+    )
+    await query.answer()
+
+
 @router.callback_query(F.data == "menu:docs")
 async def cb_docs(query: CallbackQuery, settings: Settings) -> None:
     await query.message.edit_text(  # type: ignore[union-attr]
@@ -196,19 +246,23 @@ async def cb_docs(query: CallbackQuery, settings: Settings) -> None:
 async def cb_support(query: CallbackQuery, settings: Settings) -> None:
     from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+    from app.bot.keyboards.common import manager_contact_url
     from app.bot.texts import SUPPORT_FALLBACK
 
-    rows: list[list[InlineKeyboardButton]] = []
-    if settings.support_url:
-        rows.append(
-            [InlineKeyboardButton(text="Написать в поддержку", url=settings.support_url)]
-        )
+    support = manager_contact_url(settings)
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton(text="Написать в поддержку @kovalg29", url=support)]
+    ]
     if settings.paysupport_url:
         rows.append(
             [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)]
         )
     rows.append([InlineKeyboardButton(text="« Назад", callback_data="menu:home")])
-    text = "Поддержка:" if settings.support_url else SUPPORT_FALLBACK
+    text = (
+        f"Поддержка: {support}\nНапишите менеджеру @kovalg29."
+        if support
+        else SUPPORT_FALLBACK
+    )
     await query.message.edit_text(  # type: ignore[union-attr]
         text,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),

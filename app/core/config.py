@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     telegram_login_bot_username: str = ""
     telegram_login_auth_date_max_age: int = 86400
 
-    support_url: str = ""
+    support_url: str = "https://t.me/kovalg29"
     terms_url: str = ""
     paysupport_url: str = ""
 
