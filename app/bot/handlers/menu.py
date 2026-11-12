@@ -5,7 +5,12 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.bot.keyboards.common import enter_channel_kb, main_menu_kb, subscribe_plans_kb
+from app.bot.keyboards.common import (
+    docs_kb,
+    enter_channel_kb,
+    main_menu_kb,
+    subscribe_plans_kb,
+)
 from app.bot.texts import (
     DEFERRED_NOTE,
     ONE_TIME_NOTE,
@@ -178,23 +183,34 @@ async def cb_enter(
     await query.answer()
 
 
+@router.callback_query(F.data == "menu:docs")
+async def cb_docs(query: CallbackQuery, settings: Settings) -> None:
+    await query.message.edit_text(  # type: ignore[union-attr]
+        "Документы исполнителя (ИП Коваль Глеб Павлович):",
+        reply_markup=docs_kb(settings),
+    )
+    await query.answer()
+
+
 @router.callback_query(F.data == "menu:support")
 async def cb_support(query: CallbackQuery, settings: Settings) -> None:
+    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
     from app.bot.texts import SUPPORT_FALLBACK
 
+    rows: list[list[InlineKeyboardButton]] = []
     if settings.support_url:
-        from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="Написать в поддержку", url=settings.support_url)],
-                [InlineKeyboardButton(text="« Назад", callback_data="menu:home")],
-            ]
+        rows.append(
+            [InlineKeyboardButton(text="Написать в поддержку", url=settings.support_url)]
         )
-        await query.message.edit_text("Поддержка:", reply_markup=kb)  # type: ignore[union-attr]
-    else:
-        await query.message.edit_text(  # type: ignore[union-attr]
-            SUPPORT_FALLBACK,
-            reply_markup=main_menu_kb(),
+    if settings.paysupport_url:
+        rows.append(
+            [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)]
         )
+    rows.append([InlineKeyboardButton(text="« Назад", callback_data="menu:home")])
+    text = "Поддержка:" if settings.support_url else SUPPORT_FALLBACK
+    await query.message.edit_text(  # type: ignore[union-attr]
+        text,
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
+    )
     await query.answer()

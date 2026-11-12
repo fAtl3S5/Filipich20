@@ -16,6 +16,8 @@ BOT_COMMANDS: list[BotCommand] = [
     BotCommand(command="buy", description="Купить подписку"),
     BotCommand(command="status", description="Моя подписка"),
     BotCommand(command="enter", description="Войти в канал"),
+    BotCommand(command="terms", description="Оферта и документы"),
+    BotCommand(command="paysupport", description="Поддержка по оплате"),
     BotCommand(command="support", description="Поддержка"),
 ]
 

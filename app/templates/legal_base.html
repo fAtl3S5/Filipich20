@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }} — Филипп расскажет</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #d6d3d1;
+      --accent: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg, #efe8df 0%, var(--bg) 40%, #fff 100%);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 { font-size: 1.65rem; margin: 0 0 0.35rem; }
+    h2 { font-size: 1.15rem; margin: 1.6rem 0 0.5rem; }
+    p, li { color: var(--ink); }
+    .meta { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+    nav {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin: 0 0 1.5rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    a { color: var(--accent); }
+    .card {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin: 1rem 0;
+    }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <nav>
+      <a href="/legal">Документы</a>
+      <a href="/legal/offer">Оферта</a>
+      <a href="/legal/privacy">Политика конфиденциальности</a>
+      <a href="/paysupport">Поддержка по оплате</a>
+    </nav>
+    <h1>{{ title }}</h1>
+    <p class="meta">{{ subtitle }}</p>
+    {% block body %}{% endblock %}
+  </main>
+</body>
+</html>

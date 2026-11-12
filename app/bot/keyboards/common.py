@@ -14,8 +14,24 @@ def main_menu_kb(*, active: bool = False) -> InlineKeyboardMarkup:
     ]
     if active:
         rows.append([InlineKeyboardButton(text="Войти в канал", callback_data="menu:enter")])
+    rows.append([InlineKeyboardButton(text="Документы", callback_data="menu:docs")])
     rows.append([InlineKeyboardButton(text="Поддержка", callback_data="menu:support")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def docs_kb(settings: Settings) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
+            [
+                InlineKeyboardButton(
+                    text="Политика конфиденциальности",
+                    url=settings.privacy_url,
+                )
+            ],
+            [InlineKeyboardButton(text="« Назад", callback_data="menu:home")],
+        ]
+    )
 
 
 def subscribe_plans_kb(settings: Settings) -> InlineKeyboardMarkup:

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.keyboards.common import docs_kb
 from app.core.config import Settings
 from app.services.support import create_support_ticket
 from app.services.users import get_or_create_user
@@ -24,23 +25,54 @@ async def cmd_support(message: Message, settings: Settings) -> None:
     await message.answer("Опишите вопрос одним сообщением.")
 
 
-@router.message(Command("terms"))
+@router.message(Command("terms", "offer", "docs"))
 async def cmd_terms(message: Message, settings: Settings) -> None:
-    url = settings.terms_url or "Условия использования будут опубликованы владельцем."
-    await message.answer(f"Условия: {url}")
+    await message.answer(
+        "Документы:\n"
+        f"Оферта: {settings.offer_url}\n"
+        f"Политика конфиденциальности: {settings.privacy_url}",
+        reply_markup=docs_kb(settings),
+        disable_web_page_preview=True,
+    )
+
+
+@router.message(Command("privacy"))
+async def cmd_privacy(message: Message, settings: Settings) -> None:
+    await message.answer(
+        f"Политика конфиденциальности:\n{settings.privacy_url}",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Открыть ПК", url=settings.privacy_url)],
+                [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
+            ]
+        ),
+        disable_web_page_preview=True,
+    )
 
 
 @router.message(Command("paysupport"))
 async def cmd_paysupport(message: Message, settings: Settings) -> None:
-    url = settings.paysupport_url or settings.support_url
-    if url:
-        await message.answer(f"Поддержка по оплате: {url}")
-    else:
-        _waiting_support.add(message.from_user.id)  # type: ignore[union-attr]
-        await message.answer(
-            "Напишите вопрос по оплате одним сообщением. "
-            "Telegram Support не поможет с покупками через этого бота."
-        )
+    assert message.from_user
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)],
+            [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
+            [
+                InlineKeyboardButton(
+                    text="Политика конфиденциальности",
+                    url=settings.privacy_url,
+                )
+            ],
+        ]
+    )
+    await message.answer(
+        "Вопросы по оплате Stars / доступу:\n"
+        f"{settings.paysupport_url}\n\n"
+        "Или напишите сюда одним сообщением — создадим обращение.",
+        reply_markup=kb,
+        disable_web_page_preview=True,
+    )
+    _waiting_support.add(message.from_user.id)
 
 
 @router.message(F.text & ~F.text.startswith("/"))

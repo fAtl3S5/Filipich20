@@ -90,7 +90,20 @@ class Settings(BaseSettings):
             or "localhost" in self.yookassa_return_url
         ):
             self.yookassa_return_url = f"{self.app_base_url.rstrip('/')}/checkout/return"
+        base = self.app_base_url.rstrip("/")
+        if base and not self.terms_url:
+            self.terms_url = f"{base}/legal/offer"
+        if base and not self.paysupport_url:
+            self.paysupport_url = f"{base}/paysupport"
         return self
+
+    @property
+    def offer_url(self) -> str:
+        return self.terms_url or f"{self.app_base_url.rstrip('/')}/legal/offer"
+
+    @property
+    def privacy_url(self) -> str:
+        return f"{self.app_base_url.rstrip('/')}/legal/privacy"
 
     @property
     def is_production(self) -> bool:

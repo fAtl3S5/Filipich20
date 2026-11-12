@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import admin_api, checkout, health, webhooks
+from app.api import admin_api, checkout, health, legal, webhooks
 from app.core.config import get_settings
 from app.jobs.worker import NullNotifier, worker_loop
 from app.services.access import NullTelegramAccessClient
@@ -81,6 +81,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Филипп ещё расскажет — подписка", lifespan=lifespan)
     app.include_router(health.router)
     app.include_router(checkout.router)
+    app.include_router(legal.router)
     app.include_router(webhooks.router)
     app.include_router(webhooks.root_webhook_router)
     app.include_router(admin_api.router)
