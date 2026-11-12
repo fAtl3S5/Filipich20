@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Статус заказа</title>
+  <style>
+    body { font-family: Georgia, serif; background:#1c1410; color:#f6efe4; margin:0; }
+    main { max-width:560px; margin:0 auto; padding:48px 20px; }
+    code { background:rgba(255,255,255,.08); padding:2px 6px; }
+    a { color:#e0a45a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Статус заказа</h1>
+    <p>Заказ: <code>{{ order.public_id }}</code></p>
+    <p>Статус: <strong>{{ order.status.value }}</strong></p>
+    {% if order.status.value == 'paid' %}
+      <p>Доступ активирован. Откройте бота и нажмите «Войти в канал».</p>
+    {% elif order.status.value == 'paid_unactivated' %}
+      <p>Оплата подтверждена. Активируйте доступ:</p>
+      {% if activation_link %}
+        <p><a href="{{ activation_link }}">Открыть бота для активации</a></p>
+      {% endif %}
+      {% if activation_token %}
+        <p>Или отправьте боту: <code>/start activate_{{ activation_token }}</code></p>
+      {% endif %}
+      <p>Токен одноразовый. Повторная активация тем же аккаунтом срок не продлевает.</p>
+    {% elif order.status.value == 'pending' %}
+      <p>Оплата ещё не подтверждена. Обновите позже.</p>
+    {% endif %}
+  </main>
+</body>
+</html>

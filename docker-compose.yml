@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: filippych
+      POSTGRES_USER: filippych
+      POSTGRES_PASSWORD: filippych
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filippych -d filippych"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://filippych:filippych@db:5432/filippych
+      APP_BASE_URL: http://127.0.0.1:8741
+    ports:
+      - "8741:8741"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8741/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: bash scripts/entrypoint.sh
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://filippych:filippych@db:5432/filippych
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python -m app.worker_main
+
+volumes:
+  pgdata:
