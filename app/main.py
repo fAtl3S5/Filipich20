@@ -38,6 +38,12 @@ async def lifespan(app: FastAPI):
         app.state.dispatcher = dp
         access_client = AiogramAccessClient(bot)
         notifier = AiogramNotifier(bot, settings)
+        from app.bot.commands import set_bot_commands
+
+        try:
+            await set_bot_commands(bot)
+        except Exception:  # noqa: BLE001
+            logger.exception("setMyCommands failed")
 
         if settings.app_env == "local" and not settings.is_production:
             # Optional polling in local if webhook not used — disabled by default in compose

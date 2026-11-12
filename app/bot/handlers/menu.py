@@ -52,6 +52,61 @@ async def cmd_start(message: Message, session: AsyncSession, settings: Settings)
         await message.answer(START_TEXT, reply_markup=main_menu_kb(active=False))
 
 
+def _subscribe_text(settings: Settings) -> str:
+    text = f"{SUBSCRIBE_INTRO}\n\n{ONE_TIME_NOTE}\n\n{DEFERRED_NOTE}"
+    if settings.enable_bot_initiated_yookassa and settings.is_production:
+        text += (
+            "\n\n⚠ В production оплата ЮKассой из бота отключена "
+            "(цифровой доступ внутри Telegram = Stars)."
+        )
+    return text
+
+
+@router.message(Command("subscribe", "buy"))
+async def cmd_subscribe(message: Message, settings: Settings) -> None:
+    await message.answer(_subscribe_text(settings), reply_markup=subscribe_plans_kb(settings))
+
+
+@router.message(Command("status"))
+async def cmd_status(message: Message, session: AsyncSession, settings: Settings) -> None:
+    assert message.from_user
+    user = await get_or_create_user(session, message.from_user.id, mark_started=True)
+    active = is_subscription_active(user)
+    await message.answer(
+        subscription_status_text(user, settings),
+        reply_markup=main_menu_kb(active=active),
+    )
+
+
+@router.message(Command("enter"))
+async def cmd_enter(
+    message: Message,
+    session: AsyncSession,
+    settings: Settings,
+    access_client: TelegramAccessClient,
+) -> None:
+    assert message.from_user
+    user = await get_or_create_user(session, message.from_user.id, mark_started=True)
+    if not is_subscription_active(user):
+        await message.answer(
+            "Нет активной подписки. Оформите доступ командой /subscribe.",
+            reply_markup=main_menu_kb(active=False),
+        )
+        return
+    await provision_access(session, access_client, message.from_user.id, settings=settings)
+    try:
+        link = await create_channel_invite(
+            session, access_client, message.from_user.id, settings=settings
+        )
+    except Exception as exc:  # noqa: BLE001
+        await message.answer(f"Не удалось создать ссылку: {exc}")
+        return
+    await message.answer(
+        "Одна кнопка — вход в канал. Комментарии — под постами.",
+        reply_markup=enter_channel_kb(link),
+    )
+
+
 @router.callback_query(F.data == "menu:home")
 async def cb_home(query: CallbackQuery, session: AsyncSession, settings: Settings) -> None:
     assert query.from_user
@@ -64,13 +119,10 @@ async def cb_home(query: CallbackQuery, session: AsyncSession, settings: Setting
 
 @router.callback_query(F.data == "menu:subscribe")
 async def cb_subscribe(query: CallbackQuery, settings: Settings) -> None:
-    text = f"{SUBSCRIBE_INTRO}\n\n{ONE_TIME_NOTE}\n\n{DEFERRED_NOTE}"
-    if settings.enable_bot_initiated_yookassa and settings.is_production:
-        text += (
-            "\n\n⚠ В production оплата ЮKассой из бота отключена "
-            "(цифровой доступ внутри Telegram = Stars)."
-        )
-    await query.message.edit_text(text, reply_markup=subscribe_plans_kb(settings))  # type: ignore[union-attr]
+    await query.message.edit_text(  # type: ignore[union-attr]
+        _subscribe_text(settings),
+        reply_markup=subscribe_plans_kb(settings),
+    )
     await query.answer()
 
 
