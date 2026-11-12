@@ -10,10 +10,9 @@ from app.core.db import get_session
 router = APIRouter(tags=["health"])
 
 
-@router.get("/healthz")
-async def healthz(
-    session: AsyncSession = Depends(get_session),
-    settings: Settings = Depends(get_settings),
+async def _health_payload(
+    session: AsyncSession,
+    settings: Settings,
 ) -> dict:
     db_ok = False
     try:
@@ -27,3 +26,20 @@ async def healthz(
         payload["production_ready"] = not missing
         payload["missing_env"] = missing
     return payload
+
+
+@router.get("/healthz")
+async def healthz(
+    session: AsyncSession = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    return await _health_payload(session, settings)
+
+
+@router.get("/health")
+async def health_bothost(
+    session: AsyncSession = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Bothost-friendly alias for /healthz."""
+    return await _health_payload(session, settings)

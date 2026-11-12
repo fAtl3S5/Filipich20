@@ -34,12 +34,10 @@ async def yookassa_webhook(
     return {"status": status}
 
 
-@router.post("/telegram")
-async def telegram_webhook(
+async def _handle_telegram_update(
     request: Request,
-    session: AsyncSession = Depends(get_session),
-    settings: Settings = Depends(get_settings),
-    x_telegram_bot_api_secret_token: str | None = Header(default=None),
+    settings: Settings,
+    x_telegram_bot_api_secret_token: str | None,
 ) -> dict[str, bool]:
     if settings.telegram_webhook_secret:
         if not x_telegram_bot_api_secret_token or not constant_time_equals(
@@ -55,3 +53,29 @@ async def telegram_webhook(
 
     await dp.feed_update(bot, Update.model_validate(update))
     return {"ok": True}
+
+
+@router.post("/telegram")
+async def telegram_webhook(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    x_telegram_bot_api_secret_token: str | None = Header(default=None),
+) -> dict[str, bool]:
+    return await _handle_telegram_update(
+        request, settings, x_telegram_bot_api_secret_token
+    )
+
+
+# Bothost docs commonly use POST /webhook — keep a root alias.
+root_webhook_router = APIRouter(tags=["webhooks"])
+
+
+@root_webhook_router.post("/webhook")
+async def telegram_webhook_bothost_alias(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    x_telegram_bot_api_secret_token: str | None = Header(default=None),
+) -> dict[str, bool]:
+    return await _handle_telegram_update(
+        request, settings, x_telegram_bot_api_secret_token
+    )

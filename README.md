@@ -108,10 +108,24 @@ Join request: проверка `telegram_user_id` + активная подпи�
 
 Подробности: `DISCUSSION_READ_LIMITATION` в `app/services/access.py`.
 
+## Деплой на Bothost
+
+Платформа [Bothost](https://bothost.ru) подходит для **одного контейнера** (FastAPI + бот + in-process jobs + HTTPS-домен). Встроенного one-click PostgreSQL в доках бота нет — берите **внешний Postgres** (или временный SQLite на томе `/app/data`).
+
+Пошаговая инструкция владельца: [`docs/bothost-deploy.md`](docs/bothost-deploy.md).
+
+Кратко в панели Bothost:
+
+1. Создать бота из Git, включить **свой Dockerfile** и **домен**
+2. Внутренний порт `8080`
+3. Прописать env из `.env.example` (секреты только в панели)
+4. Проверить `https://<DOMAIN>/health` и `https://<DOMAIN>/checkout`
+5. ЮKасса webhook → `/webhooks/yookassa`; Telegram → `/webhook`
+
 ## Webhooks
 
 - ЮKасса: `POST /webhooks/yookassa` — тело не доверяем; платеж перечитывается через API.
-- Telegram: `POST /webhooks/telegram` + заголовок `X-Telegram-Bot-Api-Secret-Token`.
+- Telegram: `POST /webhook` (Bothost-алиас) или `POST /webhooks/telegram` + заголовок `X-Telegram-Bot-Api-Secret-Token`.
 
 ## Админка
 

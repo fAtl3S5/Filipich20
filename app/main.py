@@ -76,6 +76,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(checkout.router)
     app.include_router(webhooks.router)
+    app.include_router(webhooks.root_webhook_router)
     app.include_router(admin_api.router)
     static_dir = __import__("pathlib").Path(__file__).parent / "static"
     static_dir.mkdir(exist_ok=True)

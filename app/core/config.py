@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,8 +18,15 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-change-me"
     admin_web_token: str = "dev-admin-token"
 
+    # Bothost injects DOMAIN / PORT / DATA_DIR; we accept them without requiring use.
+    domain: str = ""
+    port: int = 8080
+    data_dir: str = "/app/data"
+
     bot_token: str = ""
     telegram_webhook_secret: str = "dev-webhook-secret"
+    telegram_webhook_path: str = "/webhook"
+    set_telegram_webhook: bool = True
     admin_ids: list[int] = Field(default_factory=list)
     channel_id: int | None = None
     discussion_group_id: int | None = None
@@ -67,6 +74,23 @@ class Settings(BaseSettings):
         if not text:
             return []
         return [int(part.strip()) for part in text.split(",") if part.strip()]
+
+    @model_validator(mode="after")
+    def apply_bothost_domain(self) -> "Settings":
+        # If Bothost set DOMAIN and APP_BASE_URL is still local default — promote HTTPS URL.
+        if self.domain and (
+            not self.app_base_url
+            or "127.0.0.1" in self.app_base_url
+            or "localhost" in self.app_base_url
+        ):
+            self.app_base_url = f"https://{self.domain.rstrip('/')}"
+        if self.domain and (
+            not self.yookassa_return_url
+            or "127.0.0.1" in self.yookassa_return_url
+            or "localhost" in self.yookassa_return_url
+        ):
+            self.yookassa_return_url = f"{self.app_base_url.rstrip('/')}/checkout/return"
+        return self
 
     @property
     def is_production(self) -> bool:
