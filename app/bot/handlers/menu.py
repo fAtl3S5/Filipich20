@@ -6,7 +6,14 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards.common import enter_channel_kb, main_menu_kb, subscribe_plans_kb
-from app.bot.texts import DEFERRED_NOTE, ONE_TIME_NOTE, START_TEXT, SUBSCRIBE_INTRO
+from app.bot.texts import (
+    DEFERRED_NOTE,
+    ONE_TIME_NOTE,
+    START_TEXT,
+    STARS_TEST_NOTE,
+    SUBSCRIBE_INTRO,
+)
+from app.payments.stars import available_stars_plans
 from app.core.config import Settings, get_settings
 from app.services.access import TelegramAccessClient, create_channel_invite, provision_access
 from app.services.subscriptions import activate_order_with_token, subscription_status_text
@@ -54,6 +61,12 @@ async def cmd_start(message: Message, session: AsyncSession, settings: Settings)
 
 def _subscribe_text(settings: Settings) -> str:
     text = f"{SUBSCRIBE_INTRO}\n\n{ONE_TIME_NOTE}\n\n{DEFERRED_NOTE}"
+    if available_stars_plans(settings):
+        text += f"\n\n{STARS_TEST_NOTE}"
+    elif settings.enable_stars:
+        text += "\n\nТарифы Stars пока не заданы (нужны STARS_PRICE_*)."
+    if not settings.enable_web_yookassa:
+        text += "\n\nОплата картой на сайте сейчас выключена."
     if settings.enable_bot_initiated_yookassa and settings.is_production:
         text += (
             "\n\n⚠ В production оплата ЮKассой из бота отключена "

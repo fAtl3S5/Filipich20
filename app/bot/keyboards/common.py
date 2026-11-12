@@ -35,7 +35,7 @@ def subscribe_plans_kb(settings: Settings) -> InlineKeyboardMarkup:
         if code in stars:
             buttons.append(
                 InlineKeyboardButton(
-                    text=f"{plan.title} — {stars[code].xtr} ⭐",
+                    text=f"{plan.title} — {stars[code].xtr} ⭐ (тест)",
                     callback_data=f"stars:{code}",
                 )
             )
