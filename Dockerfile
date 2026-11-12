@@ -22,10 +22,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN chmod +x scripts/entrypoint.sh scripts/bothost_start.sh scripts/backup.sh scripts/restore.sh
+RUN chmod +x scripts/entrypoint.sh scripts/bothost_start.sh scripts/bothost_runtime_entry.sh scripts/backup.sh scripts/restore.sh
 
 EXPOSE 8080
 
+# ENTRYPOINT survives Bothost CMD override to http_wrapper.py when custom Dockerfile is honored.
+ENTRYPOINT ["bash", "scripts/bothost_runtime_entry.sh"]
 # Local compose overrides command to scripts/entrypoint.sh (fixed port 8741).
-# Bothost custom Dockerfile / archive rebuild: Python entry (also works if platform wraps CMD).
 CMD ["python", "main.py"]
