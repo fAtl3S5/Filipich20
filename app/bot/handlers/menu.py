@@ -12,6 +12,7 @@ from app.bot.keyboards.common import (
     main_menu_kb,
     services_kb,
     subscribe_plans_kb,
+    subscription_status_kb,
 )
 from app.bot.texts import (
     FAQ_INTRO,
@@ -23,7 +24,11 @@ from app.bot.texts import (
 )
 from app.core.config import Settings
 from app.services.access import TelegramAccessClient, create_channel_invite, provision_access
-from app.services.subscriptions import activate_order_with_token, subscription_status_text
+from app.services.subscriptions import (
+    activate_order_with_token,
+    set_auto_renew,
+    subscription_status_text,
+)
 from app.services.users import get_or_create_user, is_subscription_active
 
 router = Router(name="menu")
@@ -60,7 +65,7 @@ async def cmd_start(message: Message, session: AsyncSession, settings: Settings)
     if active:
         await message.answer(
             subscription_status_text(user, settings),
-            reply_markup=main_menu_kb(active=True),
+            reply_markup=subscription_status_kb(user, active=True),
         )
     else:
         await message.answer(START_TEXT, reply_markup=main_menu_kb(active=False))
@@ -104,7 +109,7 @@ async def cmd_status(message: Message, session: AsyncSession, settings: Settings
     active = is_subscription_active(user)
     await message.answer(
         subscription_status_text(user, settings),
-        reply_markup=main_menu_kb(active=active),
+        reply_markup=subscription_status_kb(user, active=active),
     )
 
 
@@ -168,9 +173,26 @@ async def cb_status(query: CallbackQuery, session: AsyncSession, settings: Setti
     active = is_subscription_active(user)
     await query.message.edit_text(  # type: ignore[union-attr]
         subscription_status_text(user, settings),
-        reply_markup=main_menu_kb(active=active),
+        reply_markup=subscription_status_kb(user, active=active),
     )
     await query.answer()
+
+
+@router.callback_query(F.data == "sub:toggle_auto_renew")
+async def cb_toggle_auto_renew(
+    query: CallbackQuery, session: AsyncSession, settings: Settings
+) -> None:
+    assert query.from_user
+    user = await get_or_create_user(session, query.from_user.id, mark_started=True)
+    await set_auto_renew(session, user, enabled=not bool(user.auto_renew_enabled))
+    await session.commit()
+    active = is_subscription_active(user)
+    state = "включено" if user.auto_renew_enabled else "выключено"
+    await query.message.edit_text(  # type: ignore[union-attr]
+        subscription_status_text(user, settings),
+        reply_markup=subscription_status_kb(user, active=active),
+    )
+    await query.answer(f"Автопродление: {state}")
 
 
 @router.callback_query(F.data == "menu:enter")

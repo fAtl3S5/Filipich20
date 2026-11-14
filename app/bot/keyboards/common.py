@@ -61,19 +61,44 @@ def contact_manager_kb(settings: Settings, *, back: str = "menu:services") -> In
 
 def faq_kb(settings: Settings) -> InlineKeyboardMarkup:
     support = manager_contact_url(settings)
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
+            [
+                InlineKeyboardButton(
+                    text="Политика конфиденциальности",
+                    url=settings.privacy_url,
+                )
+            ],
+            [InlineKeyboardButton(text="Написать в поддержку", url=support)],
+            [InlineKeyboardButton(text="« Назад", callback_data="menu:home")],
+        ]
+    )
+
+
+def subscription_status_kb(user, *, active: bool) -> InlineKeyboardMarkup:
+    auto_on = bool(getattr(user, "auto_renew_enabled", False))
+    # Preference toggle (рекуррент); charging may be enabled later.
+    toggle_label = (
+        "Автопродление (рекуррент): вкл."
+        if auto_on
+        else "Автопродление (рекуррент): выкл."
+    )
     rows: list[list[InlineKeyboardButton]] = [
-        [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
         [
             InlineKeyboardButton(
-                text="Политика конфиденциальности",
-                url=settings.privacy_url,
+                text=toggle_label,
+                callback_data="sub:toggle_auto_renew",
             )
         ],
-        [InlineKeyboardButton(text="Написать в поддержку @kovalg29", url=support)],
     ]
-    if settings.paysupport_url:
+    if not active:
         rows.append(
-            [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)]
+            [InlineKeyboardButton(text="Оформить подписку", callback_data="menu:subscribe")]
+        )
+    else:
+        rows.append(
+            [InlineKeyboardButton(text="Войти в канал", callback_data="menu:enter")]
         )
     rows.append([InlineKeyboardButton(text="« Назад", callback_data="menu:home")])
     return InlineKeyboardMarkup(inline_keyboard=rows)

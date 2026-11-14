@@ -19,8 +19,9 @@ BOT_COMMANDS: list[BotCommand] = [
     BotCommand(command="enter", description="Войти в канал"),
     BotCommand(command="faq", description="FAQ и поддержка"),
     BotCommand(command="terms", description="Оферта"),
-    BotCommand(command="paysupport", description="Поддержка по оплате"),
-    BotCommand(command="support", description="Поддержка"),
+    BotCommand(command="support", description="Написать в поддержку"),
+    # Telegram Stars may expect /paysupport; same UX as support (no separate menu button).
+    BotCommand(command="paysupport", description="Написать в поддержку"),
 ]
 
 

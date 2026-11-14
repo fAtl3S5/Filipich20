@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.core.timeutil import add_calendar_months, utcnow
 from app.jobs.worker import process_job, run_once
 from app.models.entities import (
+    AutoRenewEvent,
     Grant,
     Job,
     JobStatus,
@@ -39,6 +40,8 @@ from app.services.subscriptions import (
     create_activation_token,
     mark_payment_succeeded,
     reverse_grant_for_refund,
+    set_auto_renew,
+    subscription_status_text,
 )
 from app.services.users import get_or_create_user, is_subscription_active
 
@@ -392,3 +395,40 @@ async def test_stars_payment_path(session, settings):
     )
     user = (await session.execute(select(User).where(User.telegram_user_id == 555))).scalar_one()
     assert is_subscription_active(user)
+
+
+@pytest.mark.asyncio
+async def test_auto_renew_preference_persisted_and_tracked(session, settings):
+    user = await get_or_create_user(session, 777, mark_started=True)
+    assert user.auto_renew_enabled is False
+    text_off = subscription_status_text(user, settings)
+    assert "Статус:" in text_off
+    assert "Автопродление: выключено" in text_off
+
+    await set_auto_renew(session, user, enabled=True)
+    await session.commit()
+    await session.refresh(user)
+    assert user.auto_renew_enabled is True
+    text_on = subscription_status_text(user, settings)
+    assert "Автопродление: включено" in text_on
+    assert "рекуррент" in text_on.lower()
+
+    events = (
+        await session.execute(
+            select(AutoRenewEvent).where(AutoRenewEvent.user_id == user.id)
+        )
+    ).scalars().all()
+    assert len(events) == 1
+    assert events[0].enabled is True
+
+    await set_auto_renew(session, user, enabled=False)
+    await session.commit()
+    events2 = (
+        await session.execute(
+            select(AutoRenewEvent)
+            .where(AutoRenewEvent.user_id == user.id)
+            .order_by(AutoRenewEvent.id)
+        )
+    ).scalars().all()
+    assert [e.enabled for e in events2] == [True, False]
+

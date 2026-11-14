@@ -2,6 +2,7 @@ from app.models.entities import (
     AccessAction,
     ActivationToken,
     AdminAction,
+    AutoRenewEvent,
     Broadcast,
     BroadcastDelivery,
     Grant,
@@ -26,4 +27,6 @@ __all__ = [
     "Job",
     "AdminAction",
     "SupportTicket",
+    "AutoRenewEvent",
 ]
+

@@ -51,27 +51,13 @@ async def cmd_privacy(message: Message, settings: Settings) -> None:
 
 @router.message(Command("paysupport"))
 async def cmd_paysupport(message: Message, settings: Settings) -> None:
+    """Telegram may expect /paysupport; same FAQ + one support button as /support."""
     assert message.from_user
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)],
-            [InlineKeyboardButton(text="Оферта", url=settings.offer_url)],
-            [
-                InlineKeyboardButton(
-                    text="Политика конфиденциальности",
-                    url=settings.privacy_url,
-                )
-            ],
-        ]
-    )
     await message.answer(
-        "Вопросы по оплате и доступу:\n"
-        f"{settings.paysupport_url}\n\n"
-        "Или напишите сюда одним сообщением — создадим обращение.",
-        reply_markup=kb,
+        FAQ_INTRO,
+        reply_markup=faq_kb(settings),
         disable_web_page_preview=True,
     )
-    _waiting_support.add(message.from_user.id)
 
 
 @router.message(F.text & ~F.text.startswith("/"))

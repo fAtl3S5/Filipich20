@@ -119,6 +119,10 @@ class User(Base):
     subscription_ends_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
     )
+    # User preference for automatic renewal (charging may be enabled later).
+    auto_renew_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     channel_access_state: Mapped[str] = mapped_column(String(32), default="unknown")
     discussion_access_state: Mapped[str] = mapped_column(String(32), default="unknown")
     manual_ban_channel: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
@@ -134,6 +138,9 @@ class User(Base):
 
     orders: Mapped[list[Order]] = relationship(back_populates="user")
     grants: Mapped[list[Grant]] = relationship(back_populates="user")
+    auto_renew_events: Mapped[list["AutoRenewEvent"]] = relationship(
+        "AutoRenewEvent", back_populates="user"
+    )
 
 
 class Order(Base):
@@ -358,3 +365,19 @@ class SupportTicket(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class AutoRenewEvent(Base):
+    """History of user auto-renew preference toggles (charging may come later)."""
+
+    __tablename__ = "auto_renew_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    enabled: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="auto_renew_events")
+

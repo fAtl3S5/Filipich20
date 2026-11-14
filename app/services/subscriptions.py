@@ -500,17 +500,49 @@ def subscription_status_text(user: User, settings: Settings | None = None) -> st
     from app.core.timeutil import format_novosibirsk, remaining_human
 
     settings = settings or get_settings()
+    auto = "включено" if getattr(user, "auto_renew_enabled", False) else "выключено"
+    auto_note = (
+        "Автопродление (рекуррент): ваше предпочтение сохранено.\n"
+        "Когда рекуррентные платежи будут подключены, при включённом "
+        "автопродлении подписка будет продлеваться автоматически."
+    )
     if is_subscription_active(user):
         ends = user.subscription_ends_at
         assert ends is not None
         return (
-            f"Статус: активна\n"
-            f"Действует до: {format_novosibirsk(ends, settings.display_timezone)}\n"
-            f"Осталось: {remaining_human(ends)}"
+            "Моя подписка\n\n"
+            "Статус: активна\n"
+            f"Срок до: {format_novosibirsk(ends, settings.display_timezone)}\n"
+            f"Осталось: {remaining_human(ends)}\n"
+            f"Автопродление: {auto}\n\n"
+            f"{auto_note}"
         )
     if user.subscription_ends_at:
         return (
-            f"Статус: истекла\n"
-            f"Закончилась: {format_novosibirsk(user.subscription_ends_at, settings.display_timezone)}"
+            "Моя подписка\n\n"
+            "Статус: истекла\n"
+            f"Срок закончился: {format_novosibirsk(user.subscription_ends_at, settings.display_timezone)}\n"
+            f"Осталось: —\n"
+            f"Автопродление: {auto}\n\n"
+            "Оформите новую подписку, чтобы снова открыть доступ.\n\n"
+            f"{auto_note}"
         )
-    return "Статус: нет активной подписки"
+    return (
+        "Моя подписка\n\n"
+        "Статус: нет активной подписки\n"
+        "Срок до: —\n"
+        "Осталось: —\n"
+        f"Автопродление: {auto}\n\n"
+        "Оформите подписку, чтобы открыть канал и комментарии.\n\n"
+        f"{auto_note}"
+    )
+
+
+async def set_auto_renew(session: AsyncSession, user: User, *, enabled: bool) -> User:
+    """Persist auto-renew preference and append a tracking event."""
+    from app.models.entities import AutoRenewEvent
+
+    user.auto_renew_enabled = enabled
+    session.add(AutoRenewEvent(user_id=user.id, enabled=enabled))
+    await session.flush()
+    return user
