@@ -12,8 +12,8 @@
 | Health | ✅ `/health` и `/healthz` → `db:true`, `production_ready:true` |
 | Webhook | ✅ `POST /webhook` (секрет в панели); Telegram `setWebhook` уже вызывается при старте |
 | Bot id | `bot_1794481994_6734_gleb23451245` |
-| Deploy mode | archive (`filipich20-v8.zip`), не Git |
-| GitHub `Filipich20` | ❌ PAT без Contents:write — репо пустое; код на agent branch |
+| Deploy mode | archive redeploy (`filipich20-ux.zip`), не Git |
+| GitHub `Filipich20` | ✅ `main` = `f2f732c` (UX auto-renew); Bothost всё ещё archive |
 | `ADMIN_IDS` | ✅ `475444567` |
 | `CHANNEL_ID` | ✅ `-1004373038215` |
 | `DISCUSSION_GROUP_ID` | ✅ `-1004381561059` |
