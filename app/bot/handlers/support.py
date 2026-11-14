@@ -5,7 +5,8 @@ from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.bot.keyboards.common import docs_kb
+from app.bot.keyboards.common import faq_kb
+from app.bot.texts import FAQ_INTRO
 from app.core.config import Settings
 from app.services.support import create_support_ticket
 from app.services.users import get_or_create_user
@@ -18,31 +19,18 @@ _waiting_support: set[int] = set()
 @router.message(Command("support"))
 async def cmd_support(message: Message, settings: Settings) -> None:
     assert message.from_user
-    from app.bot.keyboards.common import manager_contact_url
-
-    support = manager_contact_url(settings)
-    if support:
-        await message.answer(
-            f"Поддержка: {support}\nМенеджер: @kovalg29",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [InlineKeyboardButton(text="Написать @kovalg29", url=support)]
-                ]
-            ),
-            disable_web_page_preview=True,
-        )
-        return
-    _waiting_support.add(message.from_user.id)
-    await message.answer("Опишите вопрос одним сообщением.")
+    await message.answer(
+        FAQ_INTRO,
+        reply_markup=faq_kb(settings),
+        disable_web_page_preview=True,
+    )
 
 
 @router.message(Command("terms", "offer", "docs"))
 async def cmd_terms(message: Message, settings: Settings) -> None:
     await message.answer(
-        "Документы:\n"
-        f"Оферта: {settings.offer_url}\n"
-        f"Политика конфиденциальности: {settings.privacy_url}",
-        reply_markup=docs_kb(settings),
+        FAQ_INTRO,
+        reply_markup=faq_kb(settings),
         disable_web_page_preview=True,
     )
 
@@ -77,7 +65,7 @@ async def cmd_paysupport(message: Message, settings: Settings) -> None:
         ]
     )
     await message.answer(
-        "Вопросы по оплате Stars / доступу:\n"
+        "Вопросы по оплате и доступу:\n"
         f"{settings.paysupport_url}\n\n"
         "Или напишите сюда одним сообщением — создадим обращение.",
         reply_markup=kb,

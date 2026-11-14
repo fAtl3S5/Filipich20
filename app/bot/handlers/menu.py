@@ -7,24 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards.common import (
     contact_manager_kb,
-    docs_kb,
     enter_channel_kb,
+    faq_kb,
     main_menu_kb,
     services_kb,
     subscribe_plans_kb,
 )
 from app.bot.texts import (
-    DEFERRED_NOTE,
-    ONE_TIME_NOTE,
+    FAQ_INTRO,
     ONLINE_MEETING_TEXT,
     SERVICES_INTRO,
     START_TEXT,
-    STARS_TEST_NOTE,
     SUBSCRIBE_INTRO,
     VIDEO_GREETING_TEXT,
 )
-from app.payments.stars import available_stars_plans
-from app.core.config import Settings, get_settings
+from app.core.config import Settings
 from app.services.access import TelegramAccessClient, create_channel_invite, provision_access
 from app.services.subscriptions import activate_order_with_token, subscription_status_text
 from app.services.users import get_or_create_user, is_subscription_active
@@ -70,19 +67,8 @@ async def cmd_start(message: Message, session: AsyncSession, settings: Settings)
 
 
 def _subscribe_text(settings: Settings) -> str:
-    text = f"{SUBSCRIBE_INTRO}\n\n{ONE_TIME_NOTE}\n\n{DEFERRED_NOTE}"
-    if available_stars_plans(settings):
-        text += f"\n\n{STARS_TEST_NOTE}"
-    elif settings.enable_stars:
-        text += "\n\nТарифы Stars пока не заданы (нужны STARS_PRICE_*)."
-    if not settings.enable_web_yookassa:
-        text += "\n\nОплата картой на сайте сейчас выключена."
-    if settings.enable_bot_initiated_yookassa and settings.is_production:
-        text += (
-            "\n\n⚠ В production оплата ЮKассой из бота отключена "
-            "(цифровой доступ внутри Telegram = Stars)."
-        )
-    return text
+    # RUB tariffs + one-time wording only; no XTR amounts in user copy.
+    return SUBSCRIBE_INTRO
 
 
 @router.message(Command("subscribe", "buy"))
@@ -149,6 +135,11 @@ async def cmd_enter(
         "Одна кнопка — вход в канал. Комментарии — под постами.",
         reply_markup=enter_channel_kb(link),
     )
+
+
+@router.message(Command("faq"))
+async def cmd_faq(message: Message, settings: Settings) -> None:
+    await message.answer(FAQ_INTRO, reply_markup=faq_kb(settings), disable_web_page_preview=True)
 
 
 @router.callback_query(F.data == "menu:home")
@@ -233,38 +224,11 @@ async def cb_service_meeting(query: CallbackQuery, settings: Settings) -> None:
     await query.answer()
 
 
-@router.callback_query(F.data == "menu:docs")
-async def cb_docs(query: CallbackQuery, settings: Settings) -> None:
+@router.callback_query(F.data.in_({"menu:faq", "menu:docs", "menu:support"}))
+async def cb_faq(query: CallbackQuery, settings: Settings) -> None:
     await query.message.edit_text(  # type: ignore[union-attr]
-        "Документы исполнителя (ИП Коваль Глеб Павлович):",
-        reply_markup=docs_kb(settings),
-    )
-    await query.answer()
-
-
-@router.callback_query(F.data == "menu:support")
-async def cb_support(query: CallbackQuery, settings: Settings) -> None:
-    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
-    from app.bot.keyboards.common import manager_contact_url
-    from app.bot.texts import SUPPORT_FALLBACK
-
-    support = manager_contact_url(settings)
-    rows: list[list[InlineKeyboardButton]] = [
-        [InlineKeyboardButton(text="Написать в поддержку @kovalg29", url=support)]
-    ]
-    if settings.paysupport_url:
-        rows.append(
-            [InlineKeyboardButton(text="Поддержка по оплате", url=settings.paysupport_url)]
-        )
-    rows.append([InlineKeyboardButton(text="« Назад", callback_data="menu:home")])
-    text = (
-        f"Поддержка: {support}\nНапишите менеджеру @kovalg29."
-        if support
-        else SUPPORT_FALLBACK
-    )
-    await query.message.edit_text(  # type: ignore[union-attr]
-        text,
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
+        FAQ_INTRO,
+        reply_markup=faq_kb(settings),
+        disable_web_page_preview=True,
     )
     await query.answer()

@@ -29,4 +29,7 @@ def get_plan(code: str) -> Plan:
 def format_rub(kopecks: int) -> str:
     rub = kopecks // 100
     kop = kopecks % 100
-    return f"{rub}₽" if kop == 0 else f"{rub},{kop:02d}₽"
+    whole = f"{rub:,}".replace(",", " ")
+    if kop == 0:
+        return f"{whole} ₽"
+    return f"{whole},{kop:02d} ₽"
